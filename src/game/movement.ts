@@ -18,11 +18,11 @@ export function selectDefenderReaction(defender: Defender, path: Point[], maxXRe
 }
 
 export function selectGoalkeeperReaction(goalkeeper: Defender, path: Point[], goalLeft: number, goalRight: number, maxDive = 90): Reaction {
-  const start = copyPoint(goalkeeper.center);
-  if (!path.length) return { start, target: copyPoint(start) };
-  const crossing = path.reduce((best, point) => Math.abs(point.y - start.y) < Math.abs(best.y - start.y) ? point : best);
   const minimumX = goalLeft + goalkeeper.radius;
   const maximumX = goalRight - goalkeeper.radius;
+  const start = { x: clamp(goalkeeper.center.x, minimumX, maximumX), y: goalkeeper.center.y };
+  if (!path.length) return { start, target: copyPoint(start) };
+  const crossing = path.reduce((best, point) => Math.abs(point.y - start.y) < Math.abs(best.y - start.y) ? point : best);
   const legalX = clamp(crossing.x, minimumX, maximumX);
   const divedX = start.x + clamp(legalX - start.x, -maxDive, maxDive);
   return { start, target: { x: clamp(divedX, minimumX, maximumX), y: start.y } };

@@ -23,7 +23,9 @@ describe('actor reactions', () => {
   it('clamps the final goalkeeper target inside the goal mouth', () => {
     const keeper = { center: { x: 0, y: 160 }, radius: 21 };
     const reaction = selectGoalkeeperReaction(keeper, [{x:320,y:160}], 78, 312);
-    expect(reaction.target.x).toBe(99);
+    expect(reaction.start.x).toBe(99);
+    expect(reaction.target.x).toBe(189);
+    expect(reaction.target.x - reaction.start.x).toBe(90);
   });
   it('interpolates reactions with clamped progress', () => {
     const reaction = {start:{x:10,y:20},target:{x:30,y:40}};
