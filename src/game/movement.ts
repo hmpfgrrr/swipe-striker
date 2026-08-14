@@ -5,6 +5,14 @@ export type Reaction = { start: Point; target: Point };
 const copyPoint = (point: Point): Point => ({ x: point.x, y: point.y });
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
 
+export function createPatrolRange(startX: number, halfWidth: number, minimumX: number, maximumX: number): { from: number; to: number } {
+  return { from: clamp(startX - halfWidth, minimumX, maximumX), to: clamp(startX + halfWidth, minimumX, maximumX) };
+}
+
+export function scaleReactionProgress(overallProgress: number, overallDuration: number, actorDuration: number): number {
+  return clamp(overallProgress * overallDuration / actorDuration, 0, 1);
+}
+
 export function selectDefenderReaction(defender: Defender, path: Point[], maxXReach = 70, maxYReach = 45, maxMove = 55): Reaction {
   const start = copyPoint(defender.center);
   const reachable = path.filter(point => Math.abs(point.x - start.x) <= maxXReach && Math.abs(point.y - start.y) <= maxYReach);

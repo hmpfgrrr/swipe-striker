@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { interpolateReaction, selectDefenderReaction, selectGoalkeeperReaction } from '../src/game/movement';
+import { createPatrolRange, interpolateReaction, scaleReactionProgress, selectDefenderReaction, selectGoalkeeperReaction } from '../src/game/movement';
 
 describe('actor reactions', () => {
   it('selects the closest reachable defender interception', () => {
@@ -32,5 +32,13 @@ describe('actor reactions', () => {
     expect(interpolateReaction(reaction, 0.5)).toEqual({x:20,y:30});
     expect(interpolateReaction(reaction, 2)).toEqual({x:30,y:40});
     expect(interpolateReaction(reaction, -1)).toEqual({x:10,y:20});
+  });
+  it('creates a two-sided patrol range around the start', () => {
+    expect(createPatrolRange(100, 35, 20, 370)).toEqual({from:65,to:135});
+    expect(createPatrolRange(30, 35, 20, 370)).toEqual({from:20,to:65});
+  });
+  it('scales reaction progress from linear elapsed time', () => {
+    expect(scaleReactionProgress(250 / 650, 650, 500)).toBeCloseTo(0.5);
+    expect(scaleReactionProgress(600 / 650, 650, 500)).toBe(1);
   });
 });

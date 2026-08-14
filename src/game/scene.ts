@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { COLORS, GAME_HEIGHT, GAME_WIDTH } from './config';
 import { getFieldLayout } from './layout';
 import type { FieldLayout } from './layout';
-import { interpolateReaction, selectDefenderReaction, selectGoalkeeperReaction } from './movement';
+import { createPatrolRange, interpolateReaction, scaleReactionProgress, selectDefenderReaction, selectGoalkeeperReaction } from './movement';
 import type { Reaction } from './movement';
 import { evaluateShotFrame } from './rules';
 import { createShotPath } from './trajectory';
@@ -24,6 +24,7 @@ export class GameScene extends Phaser.Scene {
   private defenders: ActorVisual[] = [];
   private patrolTweens: Phaser.Tweens.Tween[] = [];
   private shotTween?: Phaser.Tweens.Tween;
+  private feedbackTimer?: Phaser.Time.TimerEvent;
   private dragPath: Point[] = [];
   private dragging = false;
   private shotActive = false;
@@ -77,10 +78,14 @@ export class GameScene extends Phaser.Scene {
     this.stopPatrols();
     this.defenders.forEach((actor, index) => {
       const halfWidth = actor.logical.patrolHalfWidth ?? 30;
-      this.patrolTweens.push(this.tweens.add({ targets: actor.body, x: actor.start.x + halfWidth, duration: 1250 + index * 180, ease: 'Sine.easeInOut', yoyo: true, repeat: -1, onUpdate: () => this.setActorPosition(actor, { x: actor.body.x, y: actor.start.y }) }));
+      const range = createPatrolRange(actor.start.x, halfWidth, FIELD_BOUNDS.left + actor.logical.radius, FIELD_BOUNDS.right - actor.logical.radius);
+      this.setActorPosition(actor, { x: range.from, y: actor.start.y });
+      this.patrolTweens.push(this.tweens.add({ targets: actor.body, x: range.to, duration: 1250 + index * 180, ease: 'Sine.easeInOut', yoyo: true, repeat: -1, onUpdate: () => this.setActorPosition(actor, { x: actor.body.x, y: actor.start.y }) }));
     });
     const goal = this.layout.goal;
+    const minimumKeeperX = goal.x + this.goalkeeper.logical.radius;
     const maximumKeeperX = goal.x + goal.width - this.goalkeeper.logical.radius;
+    this.setActorPosition(this.goalkeeper, { x: minimumKeeperX, y: this.goalkeeper.start.y });
     this.patrolTweens.push(this.tweens.add({ targets: this.goalkeeper.body, x: maximumKeeperX, duration: 1450, ease: 'Sine.easeInOut', yoyo: true, repeat: -1, onUpdate: () => this.setActorPosition(this.goalkeeper, { x: this.goalkeeper.body.x, y: this.goalkeeper.start.y }) }));
   }
 
@@ -125,7 +130,7 @@ export class GameScene extends Phaser.Scene {
     const keeperReaction = selectGoalkeeperReaction(this.goalkeeper.logical, path, this.layout.goal.x, this.layout.goal.x + this.layout.goal.width);
     let previousBall = { x: this.ball.x, y: this.ball.y };
 
-    this.shotTween = this.tweens.addCounter({ from: 0, to: 1, duration: 650, ease: 'Sine.easeInOut', onUpdate: tween => {
+    this.shotTween = this.tweens.addCounter({ from: 0, to: 1, duration: 650, ease: 'Linear', onUpdate: tween => {
       if (!this.shotActive) return;
       const progress = tween.getValue() ?? 0;
       const pathPosition = progress * (path.length - 1);
@@ -135,7 +140,7 @@ export class GameScene extends Phaser.Scene {
       const currentBall = { x: Phaser.Math.Linear(path[index].x, path[next].x, fraction), y: Phaser.Math.Linear(path[index].y, path[next].y, fraction) };
       this.ball.setPosition(currentBall.x, currentBall.y);
       this.defenders.forEach((actor, actorIndex) => this.setActorPosition(actor, interpolateReaction(defenderReactions[actorIndex], progress)));
-      const keeperProgress = Math.min(1, progress * 650 / 500);
+      const keeperProgress = scaleReactionProgress(progress, 650, 500);
       this.setActorPosition(this.goalkeeper, interpolateReaction(keeperReaction, keeperProgress));
       const outcome = evaluateShotFrame(previousBall, currentBall, this.defenders.map(actor => actor.logical), this.goalkeeper.logical, this.layout.goal, FIELD_BOUNDS);
       previousBall = currentBall;
@@ -151,9 +156,10 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showOutcome(message: string): void {
+    this.feedbackTimer?.remove(false);
     this.feedback.setText(message).setAlpha(1);
     this.restart.setVisible(true);
-    this.time.delayedCall(900, () => this.feedback.setAlpha(0.72));
+    this.feedbackTimer = this.time.delayedCall(900, () => { this.feedback.setAlpha(0.72); this.feedbackTimer = undefined; });
   }
 
   private resetActor(actor: ActorVisual): void { this.setActorPosition(actor, actor.start); }
@@ -161,6 +167,8 @@ export class GameScene extends Phaser.Scene {
   resetLevel(): void {
     if (!this.ball) return;
     this.shotTween?.stop();
+    this.feedbackTimer?.remove(false);
+    this.feedbackTimer = undefined;
     this.stopPatrols();
     this.ball.setPosition(this.layout.ball.x, this.layout.ball.y);
     this.defenders.forEach(actor => this.resetActor(actor));
@@ -169,7 +177,7 @@ export class GameScene extends Phaser.Scene {
     this.dragging = false;
     this.shotActive = false;
     this.restart.setVisible(false);
-    this.feedback.setAlpha(0);
+    this.feedback.setText('').setAlpha(0);
     this.pathLine.clear();
     this.startPatrols();
   }
