@@ -17,5 +17,7 @@ describe('shot rules', () => {
   it('gives defender contact precedence over a goal crossing', () => expect(evaluateShotFrame({x:50,y:15},{x:50,y:5},[{center:{x:50,y:10},radius:3}],keeper,goal,bounds)).toBe('blocked'));
   it('gives goalkeeper contact precedence over a goal crossing', () => expect(evaluateShotFrame({x:50,y:15},{x:50,y:5},[],{center:{x:50,y:10},radius:3},goal,bounds)).toBe('saved'));
   it('gives defender contact precedence over goalkeeper contact', () => expect(evaluateShotFrame({x:50,y:20},{x:50,y:5},[{center:{x:50,y:12},radius:3}],{center:{x:50,y:12},radius:3},goal,bounds)).toBe('blocked'));
+  it('includes the ball radius in visible defender contact', () => expect(evaluateShotFrame({x:20,y:30},{x:80,y:30},[{center:{x:50,y:48},radius:10}],keeper,goal,{...bounds,ballRadius:10})).toBe('blocked'));
+  it('includes the ball radius in visible goalkeeper contact', () => expect(evaluateShotFrame({x:20,y:30},{x:80,y:30},[],{center:{x:50,y:48},radius:10},goal,{...bounds,ballRadius:10})).toBe('saved'));
   it('returns null for an in-bounds nonterminal frame', () => expect(evaluateShotFrame({x:50,y:50},{x:52,y:45},[],keeper,goal,bounds)).toBeNull());
 });

@@ -2,8 +2,8 @@ import { segmentIntersectsCircle } from './collision';
 import type { Defender, Goal, PitchBounds, Point, ShotOutcome } from './types';
 
 export function evaluateShotFrame(previousBall: Point, ball: Point, defenders: Defender[], goalkeeper: Defender, goal: Goal, bounds: PitchBounds): ShotOutcome | null {
-  for (const defender of defenders) if (segmentIntersectsCircle(previousBall, ball, defender.center, defender.radius)) return 'blocked';
-  if (segmentIntersectsCircle(previousBall, ball, goalkeeper.center, goalkeeper.radius)) return 'saved';
+  for (const defender of defenders) if (segmentIntersectsCircle(previousBall, ball, defender.center, defender.radius + bounds.ballRadius)) return 'blocked';
+  if (segmentIntersectsCircle(previousBall, ball, goalkeeper.center, goalkeeper.radius + bounds.ballRadius)) return 'saved';
 
   const goalLine = goal.y + goal.height;
   const crossesGoalLine = previousBall.y > goalLine && ball.y <= goalLine;
