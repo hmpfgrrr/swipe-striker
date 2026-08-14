@@ -28,4 +28,4 @@ Safari erlaubt die PWA-Installation über eine Netzwerkadresse nur mit HTTPS; `l
 
 ## Steuerung
 
-Der Finger muss nahe am Ball starten. Während des Ziehens zeigt die Linie die geplante Flugbahn; beim Loslassen fliegt der Ball die Kurve entlang. Nach `TOR!`, `GEHALTEN`, `GEBLOCKT` oder `DANEBEN` kann die Szene über „NOCHMAL SPIELEN“ zurückgesetzt werden.
+Der Finger muss nahe am Ball starten und mindestens 80 Pixel in Richtung Tor wischen. Eine seitliche Bewegung gibt dem Ball Drall; daraus entsteht eine einzige glatte Kurve ohne scharfe Haken oder Rückwärtsbewegung. Verteidiger bewegen sich in ihren Zonen, reagieren auf den Schuss und der Torwart hechtet zur erwarteten Torposition. Nach `TOR!`, `GEHALTEN`, `GEBLOCKT`, `AUS` oder `DANEBEN` kann die Szene über „NOCHMAL SPIELEN“ zurückgesetzt werden.
