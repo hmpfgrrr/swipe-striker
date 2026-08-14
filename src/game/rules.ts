@@ -7,7 +7,11 @@ export function evaluateShotFrame(previousBall: Point, ball: Point, defenders: D
 
   const goalLine = goal.y + goal.height;
   const crossesGoalLine = previousBall.y > goalLine && ball.y <= goalLine;
-  if (crossesGoalLine && ball.x >= goal.x && ball.x <= goal.x + goal.width) return 'goal';
+  if (crossesGoalLine) {
+    const crossingProgress = (previousBall.y - goalLine) / (previousBall.y - ball.y);
+    const crossingX = previousBall.x + (ball.x - previousBall.x) * crossingProgress;
+    if (crossingX >= goal.x && crossingX <= goal.x + goal.width) return 'goal';
+  }
 
   const minimumX = bounds.left + bounds.ballRadius;
   const maximumX = bounds.right - bounds.ballRadius;

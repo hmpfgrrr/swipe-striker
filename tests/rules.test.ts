@@ -12,8 +12,10 @@ describe('shot rules', () => {
   it('misses outside goal', () => expect(evaluateShot([{x:0,y:50},{x:80,y:5}],[],keeper,goal)).toBe('missed'));
   it('returns out at a side boundary', () => expect(evaluateShotFrame({x:5,y:40},{x:-1,y:35},[],keeper,goal,bounds)).toBe('out'));
   it('scores a legal goal crossing', () => expect(evaluateShotFrame({x:50,y:15},{x:50,y:5},[],keeper,goal,bounds)).toBe('goal'));
+  it('uses the segment intersection x for a diagonal goal crossing', () => expect(evaluateShotFrame({x:30,y:15},{x:70,y:5},[],keeper,goal,bounds)).toBe('goal'));
   it('returns out across the top outside the goal', () => expect(evaluateShotFrame({x:20,y:5},{x:20,y:-1},[],keeper,goal,bounds)).toBe('out'));
   it('gives defender contact precedence over a goal crossing', () => expect(evaluateShotFrame({x:50,y:15},{x:50,y:5},[{center:{x:50,y:10},radius:3}],keeper,goal,bounds)).toBe('blocked'));
   it('gives goalkeeper contact precedence over a goal crossing', () => expect(evaluateShotFrame({x:50,y:15},{x:50,y:5},[],{center:{x:50,y:10},radius:3},goal,bounds)).toBe('saved'));
+  it('gives defender contact precedence over goalkeeper contact', () => expect(evaluateShotFrame({x:50,y:20},{x:50,y:5},[{center:{x:50,y:12},radius:3}],{center:{x:50,y:12},radius:3},goal,bounds)).toBe('blocked'));
   it('returns null for an in-bounds nonterminal frame', () => expect(evaluateShotFrame({x:50,y:50},{x:52,y:45},[],keeper,goal,bounds)).toBeNull());
 });
