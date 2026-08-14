@@ -1,0 +1,4 @@
+import type { Defender, Goal, Point } from './types';
+export type FieldLayout = { ball: Point; goal: Goal; goalkeeper: Defender; defenders: Defender[]; striker: Point };
+export function createInitialDefenders(width: number, height: number): Defender[] { return [{ center: { x: width * 0.29, y: height * 0.48 }, radius: 18 }, { center: { x: width * 0.70, y: height * 0.40 }, radius: 18 }, { center: { x: width * 0.48, y: height * 0.29 }, radius: 18 }]; }
+export function getFieldLayout(width: number, height: number): FieldLayout { return { ball: { x: width / 2, y: height * 0.82 }, striker: { x: width / 2, y: height * 0.88 }, goal: { x: width * 0.20, y: height * 0.10, width: width * 0.60, height: height * 0.07 }, goalkeeper: { center: { x: width / 2, y: height * 0.19 }, radius: 21 }, defenders: createInitialDefenders(width, height) }; }

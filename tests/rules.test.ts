@@ -1,0 +1,3 @@
+import { describe, expect, it } from 'vitest'; import { evaluateShot } from '../src/game/rules';
+const goal={x:40,y:0,width:20,height:10}, keeper={center:{x:0,y:20},radius:4};
+describe('shot rules', () => { it('scores a clean shot', () => expect(evaluateShot([{x:0,y:50},{x:50,y:5}],[],keeper,goal)).toBe('goal')); it('blocks before goal', () => expect(evaluateShot([{x:0,y:50},{x:50,y:5}],[{center:{x:20,y:32},radius:5}],keeper,goal)).toBe('blocked')); it('saves at keeper', () => expect(evaluateShot([{x:0,y:50},{x:0,y:20},{x:50,y:5}],[],keeper,goal)).toBe('saved')); it('misses outside goal', () => expect(evaluateShot([{x:0,y:50},{x:80,y:5}],[],keeper,goal)).toBe('missed')); });

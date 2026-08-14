@@ -1,0 +1,2 @@
+import { describe, expect, it } from 'vitest'; import { normalizePath, samplePolyline } from '../src/game/trajectory';
+describe('trajectory', () => { it('removes duplicates and limits points', () => expect(normalizePath([{x:0,y:0},{x:0,y:0},{x:1,y:1},{x:2,y:2}], 2)).toEqual([{x:0,y:0},{x:2,y:2}])); it('samples a line including its endpoints', () => expect(samplePolyline([{x:0,y:0},{x:10,y:0}], 4)).toEqual([{x:0,y:0},{x:4,y:0},{x:8,y:0},{x:10,y:0}])); });
