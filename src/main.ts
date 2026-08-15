@@ -8,6 +8,7 @@ new Phaser.Game({
   height: GAME_HEIGHT,
   parent: 'game-root',
   backgroundColor: '#0b1720',
+  render: { pixelArt: true, antialias: false, antialiasGL: false, roundPixels: true },
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [GameScene],
 });

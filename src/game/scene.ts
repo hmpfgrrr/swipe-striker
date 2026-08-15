@@ -15,7 +15,12 @@ import { createShotPath } from './trajectory';
 import type { Defender, PitchBounds, Point, ShotOutcome } from './types';
 export { createInitialDefenders, getFieldLayout } from './layout';
 
-type ActorVisual = { body: Phaser.GameObjects.Arc; label: Phaser.GameObjects.Text; logical: Defender; start: Point };
+type ActorVisual = {
+  body: Phaser.GameObjects.Container;
+  label: Phaser.GameObjects.Text;
+  logical: Defender;
+  start: Point;
+};
 type FieldMode = 'grass' | 'indoor';
 type ReplayActorPositions = { goalkeeper: Point; defenders: Point[] };
 
@@ -261,16 +266,68 @@ export class GameScene extends Phaser.Scene {
     this.fieldButton.on('pointerdown', () => this.scene.restart({ chooseField: true }));
   }
 
-  private makeActor(defender: Defender, label: string): ActorVisual {
+  private makeActor(
+    defender: Defender,
+    label: string,
+    hairColor: number,
+    gloves = false,
+    jerseyColor = COLORS.orange,
+  ): ActorVisual {
     const logical = { ...defender, center: { ...defender.center } };
+    const body = this.createPixelPlayer(logical.center, jerseyColor, hairColor, 'front', gloves);
     return {
-      body: this.add.circle(logical.center.x, logical.center.y, logical.radius, COLORS.orange),
+      body,
       label: this.add
         .text(logical.center.x, logical.center.y, label, { fontSize: '12px', color: '#0b1720', fontStyle: 'bold' })
         .setOrigin(0.5),
       logical,
       start: { ...logical.center },
     };
+  }
+
+  private createPixelPlayer(
+    point: Point,
+    jerseyColor: number,
+    hairColor = 0x382316,
+    facing: 'front' | 'back' = 'front',
+    gloves = false,
+  ): Phaser.GameObjects.Container {
+    const skin = 0xffc08a;
+    const shorts = 0x20232a;
+    const socks = 0xf5f0dc;
+    const shoes = 0x111318;
+    const body = this.add.container(point.x, point.y);
+    const addBlock = (x: number, y: number, width: number, height: number, color: number): void => {
+      body.add(this.add.rectangle(x + width / 2, y + height / 2, width, height, color).setOrigin(0.5));
+    };
+    addBlock(-10, -31, 20, 5, hairColor);
+    addBlock(-13, -27, 5, 6, hairColor);
+    addBlock(8, -27, 5, 6, hairColor);
+    addBlock(-10, -26, 20, 18, facing === 'back' ? hairColor : skin);
+    addBlock(-13, -21, 3, 7, facing === 'back' ? hairColor : skin);
+    addBlock(10, -21, 3, 7, facing === 'back' ? hairColor : skin);
+    if (facing === 'front') {
+      addBlock(-6, -20, 3, 3, shoes);
+      addBlock(3, -20, 3, 3, shoes);
+      addBlock(-1, -16, 3, 3, 0xd99062);
+      addBlock(-1, -10, 2, 1, 0x8f4f3f);
+    }
+    addBlock(-3, -8, 6, 2, skin);
+    addBlock(-4, -6, 8, 2, skin);
+    addBlock(-14, -4, 28, 19, jerseyColor);
+    addBlock(-18, -1, 4, 12, jerseyColor);
+    addBlock(14, -1, 4, 12, jerseyColor);
+    addBlock(gloves ? -22 : -20, gloves ? 6 : 7, gloves ? 6 : 4, gloves ? 6 : 4, gloves ? 0xffffff : skin);
+    addBlock(16, gloves ? 6 : 7, gloves ? 6 : 4, gloves ? 6 : 4, gloves ? 0xffffff : skin);
+    addBlock(-11, 15, 22, 8, shorts);
+    addBlock(-11, 23, 8, 12, jerseyColor);
+    addBlock(3, 23, 8, 12, jerseyColor);
+    addBlock(-11, 35, 8, 7, socks);
+    addBlock(3, 35, 8, 7, socks);
+    addBlock(-15, 42, 12, 4, shoes);
+    addBlock(3, 42, 12, 4, shoes);
+    body.setSize(40, 50);
+    return body;
   }
 
   private createActors(): void {
@@ -281,10 +338,20 @@ export class GameScene extends Phaser.Scene {
       .fillRect(goal.x, goal.y + goal.height, goal.width, 7)
       .lineStyle(3, COLORS.cream, 0.85)
       .strokeRect(goal.x, goal.y, goal.width, goal.height);
-    this.goalkeeper = this.makeActor(goalkeeper, 'GK');
-    this.defenders = defenders.map((defender, index) => this.makeActor(defender, `${index + 1}`));
-    this.add.circle(striker.x, striker.y, 24, COLORS.yellow);
-    this.add.text(striker.x, striker.y, '9', { fontSize: '16px', color: '#0b1720', fontStyle: 'bold' }).setOrigin(0.5);
+    this.goalkeeper = this.makeActor(goalkeeper, 'GK', 0x171717, true, 0x3d7eff);
+    const defenderHairColors = [0x382316, 0x171717, 0xc88745];
+    this.defenders = defenders.map((defender, index) =>
+      this.makeActor(defender, `${index + 1}`, defenderHairColors[index]),
+    );
+    this.createPixelPlayer(striker, COLORS.yellow, 0x382316, 'back');
+    this.add
+      .text(striker.x, striker.y, '5', {
+        fontFamily: 'monospace',
+        fontSize: '16px',
+        color: '#0b1720',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0.5);
     this.ball = this.add.circle(ball.x, ball.y, FIELD_BOUNDS.ballRadius, COLORS.white).setDepth(5);
   }
 
