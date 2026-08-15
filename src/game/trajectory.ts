@@ -1,6 +1,13 @@
 import type { PitchBounds, Point, ShotPathResult } from './types';
 
 const clamp = (value: number, minimum: number, maximum: number): number => Math.max(minimum, Math.min(maximum, value));
+const reflect = (value: number, minimum: number, maximum: number): number => {
+  const range = maximum - minimum;
+  if (range <= 0) return minimum;
+  const period = range * 2;
+  const normalized = ((value - minimum) % period + period) % period;
+  return minimum + (normalized <= range ? normalized : period - normalized);
+};
 
 export function createShotPath(gesture: Point[], start: Point, bounds: PitchBounds): ShotPathResult {
   const minX = bounds.left + bounds.ballRadius;
@@ -8,10 +15,15 @@ export function createShotPath(gesture: Point[], start: Point, bounds: PitchBoun
   const minY = bounds.top - bounds.ballRadius;
   const maxY = bounds.bottom - bounds.ballRadius;
   const accepted: Point[] = [{ x: clamp(start.x, minX, maxX), y: clamp(start.y, minY, maxY) }];
+  let rawEndX = start.x;
 
   for (const rawPoint of gesture) {
-    const point = { x: clamp(rawPoint.x, minX, maxX), y: clamp(rawPoint.y, minY, maxY) };
-    if (point.y < accepted[accepted.length - 1].y) accepted.push(point);
+    const x = bounds.sideBounce ? reflect(rawPoint.x, minX, maxX) : clamp(rawPoint.x, minX, maxX);
+    const point = { x, y: clamp(rawPoint.y, minY, maxY) };
+    if (point.y < accepted[accepted.length - 1].y) {
+      accepted.push(point);
+      rawEndX = rawPoint.x;
+    }
   }
 
   if (accepted.length === 1) return { valid: false, reason: 'backward' };
@@ -25,16 +37,22 @@ export function createShotPath(gesture: Point[], start: Point, bounds: PitchBoun
     return point.x - straightX;
   });
   const averageDeviation = deviations.length ? deviations.reduce((sum, value) => sum + value, 0) / deviations.length : 0;
+  const extendedEndY = Math.max(minY, end.y - 120);
+  const extendedRawEndX = bounds.sideBounce ? rawEndX + (rawEndX - start.x) * 0.35 : end.x;
   const control = {
-    x: clamp((accepted[0].x + end.x) / 2 + clamp(averageDeviation, -90, 90), minX, maxX),
-    y: (accepted[0].y + end.y) / 2,
+    x: bounds.sideBounce
+      ? (accepted[0].x + extendedRawEndX) / 2 + clamp(averageDeviation, -90, 90)
+      : clamp((accepted[0].x + end.x) / 2 + clamp(averageDeviation, -90, 90), minX, maxX),
+    y: (accepted[0].y + extendedEndY) / 2,
   };
   const points = Array.from({ length: 32 }, (_, index) => {
     const t = index / 31;
     const inverse = 1 - t;
     return {
-      x: clamp(inverse * inverse * accepted[0].x + 2 * inverse * t * control.x + t * t * end.x, minX, maxX),
-      y: clamp(inverse * inverse * accepted[0].y + 2 * inverse * t * control.y + t * t * end.y, minY, maxY),
+      x: bounds.sideBounce
+        ? reflect(inverse * inverse * accepted[0].x + 2 * inverse * t * control.x + t * t * extendedRawEndX, minX, maxX)
+        : clamp(inverse * inverse * accepted[0].x + 2 * inverse * t * control.x + t * t * end.x, minX, maxX),
+      y: clamp(inverse * inverse * accepted[0].y + 2 * inverse * t * control.y + t * t * extendedEndY, minY, maxY),
     };
   });
   return { valid: true, points };

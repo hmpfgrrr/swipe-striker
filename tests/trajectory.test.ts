@@ -104,4 +104,39 @@ describe('trajectory', () => {
       expect(Math.abs(point.x - straightX)).toBeLessThanOrEqual(45.001);
     });
   });
+
+  it('reflects an indoor shot from the side bande', () => {
+    const indoorBounds = { ...bounds, sideBounce: true };
+    const result = createShotPath(
+      [
+        { x: 195, y: 692 },
+        { x: 520, y: 520 },
+        { x: 520, y: 250 },
+      ],
+      { x: 195, y: 692 },
+      indoorBounds,
+    );
+
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    expect(Math.max(...result.points.map(point => point.x))).toBeGreaterThan(350);
+    expect(result.points.some((point, index) => index > 0 && point.x < result.points[index - 1].x)).toBe(true);
+  });
+
+  it('lets the ball continue rolling after the finger is released', () => {
+    const result = createShotPath(
+      [
+        { x: 195, y: 692 },
+        { x: 225, y: 520 },
+      ],
+      { x: 195, y: 692 },
+      bounds,
+    );
+
+    expect(result.valid).toBe(true);
+    if (!result.valid) return;
+
+    expect(result.points[result.points.length - 1].y).toBeLessThan(520);
+  });
 });
