@@ -12,4 +12,5 @@ new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [GameScene],
 });
-if ('serviceWorker' in navigator && import.meta.env.PROD) navigator.serviceWorker.register('/sw.js');
+if ('serviceWorker' in navigator && import.meta.env.PROD)
+  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
