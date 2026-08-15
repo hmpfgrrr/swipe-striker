@@ -7,20 +7,38 @@ function signChanges(points: { x: number; y: number }[]): number {
   const signs = points
     .slice(1)
     .map((point, index) => Math.sign(point.x - points[index].x))
-    .filter(sign => sign !== 0);
+    .filter((sign) => sign !== 0);
 
   return signs.slice(1).reduce((count, sign, index) => count + (sign !== signs[index] ? 1 : 0), 0);
 }
 
 describe('trajectory', () => {
   it('removes duplicates and limits points', () =>
-    expect(normalizePath([{ x: 0, y: 0 }, { x: 0, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 2 }], 2)).toEqual([
+    expect(
+      normalizePath(
+        [
+          { x: 0, y: 0 },
+          { x: 0, y: 0 },
+          { x: 1, y: 1 },
+          { x: 2, y: 2 },
+        ],
+        2,
+      ),
+    ).toEqual([
       { x: 0, y: 0 },
       { x: 2, y: 2 },
     ]));
 
   it('samples a line including its endpoints', () =>
-    expect(samplePolyline([{ x: 0, y: 0 }, { x: 10, y: 0 }], 4)).toEqual([
+    expect(
+      samplePolyline(
+        [
+          { x: 0, y: 0 },
+          { x: 10, y: 0 },
+        ],
+        4,
+      ),
+    ).toEqual([
       { x: 0, y: 0 },
       { x: 4, y: 0 },
       { x: 8, y: 0 },
@@ -44,9 +62,9 @@ describe('trajectory', () => {
 
     expect(result.points).toHaveLength(32);
     expect(result.points.every((point, index) => index === 0 || point.y <= result.points[index - 1].y)).toBe(true);
-    expect(Math.max(...result.points.map(point => point.x))).toBeLessThanOrEqual(360);
-    expect(Math.min(...result.points.map(point => point.x))).toBeGreaterThanOrEqual(30);
-    expect(result.points.every(point => point.y >= 18 && point.y <= 806)).toBe(true);
+    expect(Math.max(...result.points.map((point) => point.x))).toBeLessThanOrEqual(360);
+    expect(Math.min(...result.points.map((point) => point.x))).toBeGreaterThanOrEqual(30);
+    expect(result.points.every((point) => point.y >= 18 && point.y <= 806)).toBe(true);
     expect(signChanges(result.points)).toBeLessThanOrEqual(1);
   });
 
@@ -94,8 +112,8 @@ describe('trajectory', () => {
 
     expect(result.points).toHaveLength(32);
     expect(signChanges(result.points)).toBeLessThanOrEqual(1);
-    expect(Math.max(...result.points.map(point => point.x))).toBeLessThanOrEqual(360);
-    expect(Math.min(...result.points.map(point => point.x))).toBeGreaterThanOrEqual(30);
+    expect(Math.max(...result.points.map((point) => point.x))).toBeLessThanOrEqual(360);
+    expect(Math.min(...result.points.map((point) => point.x))).toBeGreaterThanOrEqual(30);
     const start = result.points[0];
     const end = result.points[result.points.length - 1];
     result.points.forEach((point, index) => {
@@ -120,7 +138,7 @@ describe('trajectory', () => {
     expect(result.valid).toBe(true);
     if (!result.valid) return;
 
-    expect(Math.max(...result.points.map(point => point.x))).toBeGreaterThan(350);
+    expect(Math.max(...result.points.map((point) => point.x))).toBeGreaterThan(350);
     expect(result.points.some((point, index) => index > 0 && point.x < result.points[index - 1].x)).toBe(true);
   });
 
