@@ -333,11 +333,19 @@ export class GameScene extends Phaser.Scene {
   private createActors(): void {
     const { goal, goalkeeper, defenders, striker, ball } = this.layout;
     const goalGraphics = this.add.graphics();
+    goalGraphics.fillStyle(0x78b968).fillRect(goal.x, goal.y, goal.width, goal.height);
+    for (let x = goal.x + 10; x < goal.x + goal.width; x += 14) {
+      goalGraphics.fillStyle(COLORS.cream, 0.55).fillRect(x, goal.y + 5, 2, goal.height - 5);
+    }
+    for (let y = goal.y + 10; y < goal.y + goal.height; y += 10) {
+      goalGraphics.fillStyle(COLORS.cream, 0.55).fillRect(goal.x + 5, y, goal.width - 10, 2);
+    }
     goalGraphics
       .fillStyle(COLORS.cream)
-      .fillRect(goal.x, goal.y + goal.height, goal.width, 7)
-      .lineStyle(3, COLORS.cream, 0.85)
-      .strokeRect(goal.x, goal.y, goal.width, goal.height);
+      .fillRect(goal.x - 5, goal.y - 5, goal.width + 10, 6)
+      .fillRect(goal.x - 5, goal.y - 5, 6, goal.height + 12)
+      .fillRect(goal.x + goal.width - 1, goal.y - 5, 6, goal.height + 12)
+      .fillRect(goal.x - 5, goal.y + goal.height, goal.width + 10, 7);
     this.goalkeeper = this.makeActor(goalkeeper, 'GK', 0x171717, true, 0x3d7eff);
     const defenderHairColors = [0x382316, 0x171717, 0xc88745];
     this.defenders = defenders.map((defender, index) =>
@@ -504,7 +512,18 @@ export class GameScene extends Phaser.Scene {
               this.layout.goal,
               bounds,
             );
+        const previousFrame = previousBall;
         previousBall = currentBall;
+        if (
+          outcome === 'goal' &&
+          previousFrame.y > this.layout.goal.y + this.layout.goal.height &&
+          currentBall.y <= this.layout.goal.y + this.layout.goal.height
+        ) {
+          const goalLine = this.layout.goal.y + this.layout.goal.height;
+          const crossingProgress = (previousFrame.y - goalLine) / (previousFrame.y - currentBall.y);
+          const crossingX = previousFrame.x + (currentBall.x - previousFrame.x) * crossingProgress;
+          this.ball.setPosition(crossingX, goalLine);
+        }
         if (outcome) this.finishShot(outcome);
       },
       onComplete: () => {
@@ -550,7 +569,26 @@ export class GameScene extends Phaser.Scene {
     this.resetLevel();
     this.replaying = true;
     this.feedback.setText('WIEDERHOLUNG').setAlpha(1);
-    this.animateShot(this.lastShotPath, 1400, true);
+    this.animateShot(this.getGoalReplayPath(), 1400, true);
+  }
+
+  private getGoalReplayPath(): Point[] {
+    const goalLine = this.layout.goal.y + this.layout.goal.height;
+    for (let index = 1; index < this.lastShotPath.length; index += 1) {
+      const previous = this.lastShotPath[index - 1];
+      const current = this.lastShotPath[index];
+      if (previous.y > goalLine && current.y <= goalLine) {
+        const progress = (previous.y - goalLine) / (previous.y - current.y);
+        return [
+          ...this.lastShotPath.slice(0, index),
+          {
+            x: previous.x + (current.x - previous.x) * progress,
+            y: goalLine,
+          },
+        ];
+      }
+    }
+    return this.lastShotPath;
   }
 
   resetLevel(): void {
