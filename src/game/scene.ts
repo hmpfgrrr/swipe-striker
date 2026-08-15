@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { COLORS, GAME_HEIGHT, GAME_WIDTH } from './config';
+import { APP_VERSION, COLORS, GAME_HEIGHT, GAME_WIDTH } from './config';
 import { getFieldLayout } from './layout';
 import type { FieldLayout } from './layout';
 import {
@@ -33,6 +33,7 @@ const OUTCOME_TEXT: Record<ShotOutcome, string> = {
   out: 'AUS',
   missed: 'DANEBEN',
 };
+const HIGHSCORE_STORAGE_KEY = 'swipe-striker-highscore';
 
 export class GameScene extends Phaser.Scene {
   private layout!: FieldLayout;
@@ -41,6 +42,7 @@ export class GameScene extends Phaser.Scene {
   private feedback!: Phaser.GameObjects.Text;
   private restart!: Phaser.GameObjects.Text;
   private fieldButton!: Phaser.GameObjects.Text;
+  private highscoreText!: Phaser.GameObjects.Text;
   private goalkeeper!: ActorVisual;
   private defenders: ActorVisual[] = [];
   private patrolTweens: Phaser.Tweens.Tween[] = [];
@@ -55,6 +57,7 @@ export class GameScene extends Phaser.Scene {
   private lastShotPath: Point[] = [];
   private lastShotActorPositions?: ReplayActorPositions;
   private replaying = false;
+  private highscore = 0;
 
   constructor() {
     super('GameScene');
@@ -108,6 +111,7 @@ export class GameScene extends Phaser.Scene {
 
   private startGame(mode: FieldMode): void {
     this.fieldMode = mode;
+    this.loadHighscore();
     if (typeof localStorage !== 'undefined') localStorage.setItem('swipe-striker-field', mode);
     this.fieldSelection.forEach((option) => option.destroy());
     this.fieldSelection = [];
@@ -144,12 +148,13 @@ export class GameScene extends Phaser.Scene {
       .strokeRect(20, 28, GAME_WIDTH - 40, GAME_HEIGHT - 56)
       .strokeCircle(GAME_WIDTH / 2, GAME_HEIGHT * 0.5, 62)
       .lineBetween(20, GAME_HEIGHT * 0.5, GAME_WIDTH - 20, GAME_HEIGHT * 0.5);
-    this.add.text(24, 32, 'SWIPE STRIKER', {
+    this.add.text(24, 32, `SWIPE STRIKER ${APP_VERSION}`, {
       fontFamily: 'system-ui',
       fontSize: '18px',
       color: '#fff4dc',
       fontStyle: 'bold',
     });
+    this.createHighscoreText();
     this.add.text(24, 58, 'Wische nach vorn – seitlich für Drall', {
       fontFamily: 'system-ui',
       fontSize: '13px',
@@ -209,12 +214,13 @@ export class GameScene extends Phaser.Scene {
       .strokeRect(fieldLeft, fieldTop, fieldWidth, fieldHeight)
       .strokeCircle(GAME_WIDTH / 2, GAME_HEIGHT * 0.5, 62)
       .lineBetween(fieldLeft, GAME_HEIGHT * 0.5, fieldLeft + fieldWidth, GAME_HEIGHT * 0.5);
-    this.add.text(24, 32, 'SWIPE STRIKER · INDOOR', {
+    this.add.text(24, 32, `SWIPE STRIKER ${APP_VERSION} · INDOOR`, {
       fontFamily: 'system-ui',
       fontSize: '18px',
       color: '#fff4dc',
       fontStyle: 'bold',
     });
+    this.createHighscoreText();
     this.add.text(24, 58, 'Bande nutzen – seitlich für Abpraller', {
       fontFamily: 'system-ui',
       fontSize: '13px',
@@ -247,6 +253,37 @@ export class GameScene extends Phaser.Scene {
       .setVisible(false);
     this.restart.on('pointerdown', () => this.resetLevel());
     this.createFieldButton();
+  }
+
+  private createHighscoreText(): void {
+    this.highscoreText = this.add
+      .text(24, GAME_HEIGHT - 105, '', {
+        fontFamily: 'system-ui',
+        fontSize: '13px',
+        color: '#fff4dc',
+        fontStyle: 'bold',
+      })
+      .setOrigin(0, 1)
+      .setDepth(20);
+    this.updateHighscoreText();
+  }
+
+  private loadHighscore(): void {
+    if (typeof localStorage === 'undefined') return;
+    const stored = Number.parseInt(localStorage.getItem(HIGHSCORE_STORAGE_KEY) ?? '0', 10);
+    this.highscore = Number.isFinite(stored) && stored >= 0 ? stored : 0;
+  }
+
+  private updateHighscoreText(): void {
+    this.highscoreText?.setText(`HIGHSCORE: ${this.highscore}`);
+  }
+
+  private registerGoal(): void {
+    this.highscore += 1;
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(HIGHSCORE_STORAGE_KEY, String(this.highscore));
+    }
+    this.updateHighscoreText();
   }
 
   private createFieldButton(): void {
@@ -483,7 +520,7 @@ export class GameScene extends Phaser.Scene {
       from: 0,
       to: 1,
       duration,
-      ease: 'Linear',
+      ease: 'Sine.easeOut',
       onUpdate: (tween) => {
         if (!this.shotActive) return;
         const progress = tween.getValue() ?? 0;
@@ -543,6 +580,7 @@ export class GameScene extends Phaser.Scene {
     if (!this.shotActive) return;
     this.shotActive = false;
     this.shotTween?.stop();
+    if (outcome === 'goal' && !this.replaying) this.registerGoal();
     this.showOutcome(OUTCOME_TEXT[outcome]);
     if (outcome === 'goal' && !this.replaying && this.lastShotPath.length) {
       this.replayTimer?.remove(false);
