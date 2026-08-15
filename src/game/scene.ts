@@ -17,6 +17,7 @@ export { createInitialDefenders, getFieldLayout } from './layout';
 
 type ActorVisual = { body: Phaser.GameObjects.Arc; label: Phaser.GameObjects.Text; logical: Defender; start: Point };
 type FieldMode = 'grass' | 'indoor';
+type ReplayActorPositions = { goalkeeper: Point; defenders: Point[] };
 
 const FIELD_BOUNDS: PitchBounds = { left: 20, right: 370, top: 28, bottom: 816, ballRadius: 10 };
 const INDOOR_BOUNDS: PitchBounds = { ...FIELD_BOUNDS, sideBounce: true };
@@ -40,11 +41,15 @@ export class GameScene extends Phaser.Scene {
   private patrolTweens: Phaser.Tweens.Tween[] = [];
   private shotTween?: Phaser.Tweens.Tween;
   private feedbackTimer?: Phaser.Time.TimerEvent;
+  private replayTimer?: Phaser.Time.TimerEvent;
   private dragPath: Point[] = [];
   private dragging = false;
   private shotActive = false;
   private fieldMode: FieldMode = 'grass';
   private fieldSelection: Phaser.GameObjects.Text[] = [];
+  private lastShotPath: Point[] = [];
+  private lastShotActorPositions?: ReplayActorPositions;
+  private replaying = false;
 
   constructor() {
     super('GameScene');
@@ -361,6 +366,7 @@ export class GameScene extends Phaser.Scene {
         this.showOutcome('DANEBEN');
         return;
       }
+      this.lastShotPath = result.points.map((point) => ({ ...point }));
       this.animateShot(result.points);
     });
   }
@@ -373,7 +379,18 @@ export class GameScene extends Phaser.Scene {
     this.pathLine.strokePath();
   }
 
-  private animateShot(path: Point[]): void {
+  private animateShot(path: Point[], duration = 650, isReplay = false): void {
+    if (isReplay && this.lastShotActorPositions) {
+      this.setActorPosition(this.goalkeeper, this.lastShotActorPositions.goalkeeper);
+      this.defenders.forEach((actor, index) =>
+        this.setActorPosition(actor, this.lastShotActorPositions!.defenders[index]),
+      );
+    } else if (!isReplay) {
+      this.lastShotActorPositions = {
+        goalkeeper: { ...this.goalkeeper.logical.center },
+        defenders: this.defenders.map((actor) => ({ ...actor.logical.center })),
+      };
+    }
     this.stopPatrols();
     this.shotActive = true;
     this.restart.setVisible(false);
@@ -390,7 +407,7 @@ export class GameScene extends Phaser.Scene {
     this.shotTween = this.tweens.addCounter({
       from: 0,
       to: 1,
-      duration: 650,
+      duration,
       ease: 'Linear',
       onUpdate: (tween) => {
         if (!this.shotActive) return;
@@ -407,22 +424,31 @@ export class GameScene extends Phaser.Scene {
         this.defenders.forEach((actor, actorIndex) =>
           this.setActorPosition(actor, interpolateReaction(defenderReactions[actorIndex], progress)),
         );
-        const keeperProgress = scaleReactionProgress(progress, 650, 600);
+        const keeperProgress = scaleReactionProgress(progress, duration, 650);
         this.setActorPosition(this.goalkeeper, interpolateReaction(keeperReaction, keeperProgress));
         const bounds = this.fieldMode === 'indoor' ? INDOOR_BOUNDS : FIELD_BOUNDS;
-        const outcome = evaluateShotFrame(
-          previousBall,
-          currentBall,
-          this.defenders.map((actor) => actor.logical),
-          this.goalkeeper.logical,
-          this.layout.goal,
-          bounds,
-        );
+        const outcome = isReplay
+          ? null
+          : evaluateShotFrame(
+              previousBall,
+              currentBall,
+              this.defenders.map((actor) => actor.logical),
+              this.goalkeeper.logical,
+              this.layout.goal,
+              bounds,
+            );
         previousBall = currentBall;
         if (outcome) this.finishShot(outcome);
       },
       onComplete: () => {
-        if (this.shotActive) this.finishShot('missed');
+        if (!this.shotActive) return;
+        if (isReplay) {
+          this.shotActive = false;
+          this.replaying = false;
+          this.showOutcome('TOR!');
+        } else {
+          this.finishShot('missed');
+        }
       },
     });
   }
@@ -432,6 +458,10 @@ export class GameScene extends Phaser.Scene {
     this.shotActive = false;
     this.shotTween?.stop();
     this.showOutcome(OUTCOME_TEXT[outcome]);
+    if (outcome === 'goal' && !this.replaying && this.lastShotPath.length) {
+      this.replayTimer?.remove(false);
+      this.replayTimer = this.time.delayedCall(1100, () => this.playGoalReplay());
+    }
   }
 
   private showOutcome(message: string): void {
@@ -448,11 +478,21 @@ export class GameScene extends Phaser.Scene {
     this.setActorPosition(actor, actor.start);
   }
 
+  private playGoalReplay(): void {
+    if (this.shotActive || !this.lastShotPath.length) return;
+    this.resetLevel();
+    this.replaying = true;
+    this.feedback.setText('WIEDERHOLUNG').setAlpha(1);
+    this.animateShot(this.lastShotPath, 1400, true);
+  }
+
   resetLevel(): void {
     if (!this.ball) return;
     this.shotTween?.stop();
     this.feedbackTimer?.remove(false);
+    this.replayTimer?.remove(false);
     this.feedbackTimer = undefined;
+    this.replayTimer = undefined;
     this.stopPatrols();
     this.ball.setPosition(this.layout.ball.x, this.layout.ball.y);
     this.defenders.forEach((actor) => this.resetActor(actor));
