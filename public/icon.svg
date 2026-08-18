@@ -1,1 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="42" fill="#0b1720"/><circle cx="96" cy="96" r="62" fill="#1e9b67"/><path d="M96 42l17 35 39 6-28 27 7 39-35-18-35 18 7-39-28-27 39-6z" fill="#fff4dc"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
+  <title id="title">Swipe Striker</title>
+  <desc id="desc">Pixeliger Fußball im Flug mit grüner und gelber Bewegungsspur</desc>
+  <rect width="192" height="192" rx="42" fill="#0b1720"/>
+  <circle cx="96" cy="96" r="72" fill="#1e9b67" stroke="#fff4dc" stroke-width="5"/>
+  <path d="M22 137c26-36 61-53 116-72" fill="none" stroke="#fff4dc" stroke-width="10" stroke-linecap="square"/>
+  <path d="M28 154c24-22 52-34 87-42" fill="none" stroke="#ffe066" stroke-width="7" stroke-linecap="square"/>
+  <path d="M31 113h18M45 96h12M61 80h12" stroke="#ffe066" stroke-width="6" stroke-linecap="square"/>
+  <g transform="translate(137 56)">
+    <circle r="30" fill="#fff4dc" stroke="#0b1720" stroke-width="5"/>
+    <path d="M0-11 10-4 7 8H-7l-3-12Z" fill="#0b1720"/>
+    <path d="M0-11-4-25M10-4l17-5M7 8l12 15M-7 8l-16 10M-10-4l-17-5" fill="none" stroke="#0b1720" stroke-width="5" stroke-linecap="square"/>
+  </g>
+  <text x="29" y="171" fill="#fff4dc" font-family="system-ui, sans-serif" font-size="48" font-style="italic" font-weight="900">S</text>
+</svg>

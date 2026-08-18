@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" role="img" aria-labelledby="title desc">
+  <title id="title">Swipe Striker</title>
+  <desc id="desc">Pixelige Swipe-Striker-Wortmarke mit fliegendem Fußball</desc>
+  <rect width="640" height="240" rx="28" fill="#0b1720"/>
+  <path d="M54 177c63-79 142-103 285-117" fill="none" stroke="#1e9b67" stroke-width="22" stroke-linecap="square"/>
+  <path d="M57 154c67-57 144-78 282-84" fill="none" stroke="#fff4dc" stroke-width="10" stroke-linecap="square"/>
+  <path d="M66 201c58-33 119-47 195-49" fill="none" stroke="#ffe066" stroke-width="8" stroke-linecap="square"/>
+  <path d="M93 125h29M116 105h17M141 87h24" stroke="#ffe066" stroke-width="7" stroke-linecap="square"/>
+  <g transform="translate(488 66)">
+    <circle r="47" fill="#fff4dc" stroke="#0b1720" stroke-width="9"/>
+    <path d="M0-18 17-7 11 14H-11l-6-21Z" fill="#0b1720"/>
+    <path d="m0-18-6-27M17-7l29-5M11 14l17 28M-11 14l-28 20M-17-7l-29-10" fill="none" stroke="#0b1720" stroke-width="11" stroke-linecap="square"/>
+  </g>
+  <g fill="#fff4dc" stroke="#0b1720" stroke-width="7" stroke-linejoin="bevel" font-family="system-ui, sans-serif" font-weight="900" font-style="italic">
+    <text x="72" y="137" font-size="71">SWIPE</text>
+    <text x="88" y="207" font-size="71" fill="#ffe066">STRIKER</text>
+  </g>
+</svg>

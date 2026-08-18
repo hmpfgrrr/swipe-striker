@@ -10,6 +10,7 @@ export const COLORS = {
   pitchDark: 0x16744f,
   cream: 0xfff4dc,
   orange: 0xff795e,
-  yellow: 0xffd166,
+  yellow: 0xffe066,
+  strikerJersey: 0xffff38,
   white: 0xffffff,
 };

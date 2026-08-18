@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { APP_VERSION, COLORS, GAME_HEIGHT, GAME_WIDTH } from './config';
-import { getFieldLayout } from './layout';
+import { createDefenderNumbers, createDynamicDefenders, getFieldLayout } from './layout';
 import type { FieldLayout } from './layout';
 import {
   createPatrolRange,
@@ -10,7 +10,7 @@ import {
   selectGoalkeeperReaction,
 } from './movement';
 import type { Reaction } from './movement';
-import { evaluateShotFrame } from './rules';
+import { evaluateShotFrame, getShotOutcomeLabel } from './rules';
 import { createShotPath } from './trajectory';
 import type { Defender, PitchBounds, Point, ShotOutcome } from './types';
 export { createInitialDefenders, getFieldLayout } from './layout';
@@ -26,13 +26,6 @@ type ReplayActorPositions = { goalkeeper: Point; defenders: Point[] };
 
 const FIELD_BOUNDS: PitchBounds = { left: 20, right: 370, top: 28, bottom: 816, ballRadius: 10 };
 const INDOOR_BOUNDS: PitchBounds = { ...FIELD_BOUNDS, sideBounce: true };
-const OUTCOME_TEXT: Record<ShotOutcome, string> = {
-  goal: 'TOR!',
-  saved: 'GEHALTEN',
-  blocked: 'GEBLOCKT',
-  out: 'AUS',
-  missed: 'DANEBEN',
-};
 const HIGHSCORE_STORAGE_KEY = 'swipe-striker-highscore';
 
 export class GameScene extends Phaser.Scene {
@@ -53,7 +46,7 @@ export class GameScene extends Phaser.Scene {
   private dragging = false;
   private shotActive = false;
   private fieldMode: FieldMode = 'grass';
-  private fieldSelection: Phaser.GameObjects.Text[] = [];
+  private fieldSelection: Phaser.GameObjects.GameObject[] = [];
   private lastShotPath: Point[] = [];
   private lastShotActorPositions?: ReplayActorPositions;
   private replaying = false;
@@ -61,6 +54,10 @@ export class GameScene extends Phaser.Scene {
 
   constructor() {
     super('GameScene');
+  }
+
+  preload(): void {
+    this.load.image('selection-logo', `${import.meta.env.BASE_URL}logo-ball-im-flug.png`);
   }
 
   create(data?: { fieldMode?: FieldMode; chooseField?: boolean }): void {
@@ -72,8 +69,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private showFieldSelection(): void {
+    const logo = this.createSelectionLogo();
     const title = this.add
-      .text(GAME_WIDTH / 2, 240, 'SPIELFELD WÄHLEN', {
+      .text(GAME_WIDTH / 2, 300, 'SPIELFELD WÄHLEN', {
         fontFamily: 'system-ui',
         fontSize: '26px',
         color: '#fff4dc',
@@ -81,7 +79,7 @@ export class GameScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
     const subtitle = this.add
-      .text(GAME_WIDTH / 2, 285, 'Wie möchtest du spielen?', {
+      .text(GAME_WIDTH / 2, 340, 'Wie möchtest du spielen?', {
         fontFamily: 'system-ui',
         fontSize: '16px',
         color: '#d2f0dc',
@@ -106,7 +104,13 @@ export class GameScene extends Phaser.Scene {
       option.on('pointerdown', () => this.startGame(mode));
       return option;
     });
-    this.fieldSelection = [title, subtitle, ...buttons];
+    this.fieldSelection = [logo, title, subtitle, ...buttons];
+  }
+
+  private createSelectionLogo(): Phaser.GameObjects.Container {
+    const logo = this.add.container(GAME_WIDTH / 2, 145);
+    logo.add(this.add.image(0, 0, 'selection-logo').setDisplaySize(190, 190));
+    return logo;
   }
 
   private startGame(mode: FieldMode): void {
@@ -383,12 +387,13 @@ export class GameScene extends Phaser.Scene {
       .fillRect(goal.x - 5, goal.y - 5, 6, goal.height + 12)
       .fillRect(goal.x + goal.width - 1, goal.y - 5, 6, goal.height + 12)
       .fillRect(goal.x - 5, goal.y + goal.height, goal.width + 10, 7);
-    this.goalkeeper = this.makeActor(goalkeeper, 'GK', 0x171717, true, 0x3d7eff);
+    this.goalkeeper = this.makeActor(goalkeeper, '1', 0x171717, true, 0x3d7eff);
     const defenderHairColors = [0x382316, 0x171717, 0xc88745];
+    const defenderNumbers = createDefenderNumbers();
     this.defenders = defenders.map((defender, index) =>
-      this.makeActor(defender, `${index + 1}`, defenderHairColors[index]),
+      this.makeActor(defender, `${defenderNumbers[index]}`, defenderHairColors[index]),
     );
-    this.createPixelPlayer(striker, COLORS.yellow, 0x382316, 'back');
+    this.createPixelPlayer(striker, COLORS.strikerJersey, 0x382316, 'back');
     this.add
       .text(striker.x, striker.y, '5', {
         fontFamily: 'monospace',
@@ -416,12 +421,13 @@ export class GameScene extends Phaser.Scene {
         FIELD_BOUNDS.left + actor.logical.radius,
         FIELD_BOUNDS.right - actor.logical.radius,
       );
-      this.setActorPosition(actor, { x: range.from, y: actor.start.y });
+      const initialX = actor.logical.patrolStartAtEnd ? range.to : range.from;
+      this.setActorPosition(actor, { x: initialX, y: actor.start.y });
       this.patrolTweens.push(
         this.tweens.add({
           targets: actor.body,
-          x: range.to,
-          duration: 1250 + index * 180,
+          x: actor.logical.patrolStartAtEnd ? range.from : range.to,
+          duration: actor.logical.patrolDuration ?? 1250 + index * 180,
           ease: 'Sine.easeInOut',
           yoyo: true,
           repeat: -1,
@@ -581,7 +587,7 @@ export class GameScene extends Phaser.Scene {
     this.shotActive = false;
     this.shotTween?.stop();
     if (outcome === 'goal' && !this.replaying) this.registerGoal();
-    this.showOutcome(OUTCOME_TEXT[outcome]);
+    this.showOutcome(getShotOutcomeLabel(outcome));
     if (outcome === 'goal' && !this.replaying && this.lastShotPath.length) {
       this.replayTimer?.remove(false);
       this.replayTimer = this.time.delayedCall(1100, () => this.playGoalReplay());
@@ -638,7 +644,13 @@ export class GameScene extends Phaser.Scene {
     this.replayTimer = undefined;
     this.stopPatrols();
     this.ball.setPosition(this.layout.ball.x, this.layout.ball.y);
-    this.defenders.forEach((actor) => this.resetActor(actor));
+    const nextDefenders = createDynamicDefenders(GAME_WIDTH, GAME_HEIGHT);
+    this.defenders.forEach((actor, index) => {
+      const defender = nextDefenders[index];
+      actor.logical = { ...defender, center: { ...defender.center } };
+      actor.start = { ...defender.center };
+      this.resetActor(actor);
+    });
     this.resetActor(this.goalkeeper);
     this.dragPath = [];
     this.dragging = false;

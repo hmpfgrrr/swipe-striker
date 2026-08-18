@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { evaluateShot, evaluateShotFrame } from '../src/game/rules';
+import { evaluateShot, evaluateShotFrame, getShotOutcomeLabel } from '../src/game/rules';
 
 const goal = { x: 40, y: 0, width: 20, height: 10 };
 const keeper = { center: { x: 0, y: 20 }, radius: 4 };
 const bounds = { left: 0, right: 100, top: 0, bottom: 100, ballRadius: 0 };
 
 describe('shot rules', () => {
+  it('labels a shot that does not reach the goal line as verhungert', () => {
+    expect(getShotOutcomeLabel('missed')).toBe('VERHUNGERT');
+  });
   it('scores a clean shot', () =>
     expect(
       evaluateShot(

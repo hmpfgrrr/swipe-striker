@@ -1,6 +1,10 @@
 import { segmentIntersectsCircle } from './collision';
 import type { Defender, Goal, PitchBounds, Point, ShotOutcome } from './types';
 
+export function getShotOutcomeLabel(outcome: ShotOutcome): string {
+  return { goal: 'TOR!', saved: 'GEHALTEN', blocked: 'GEBLOCKT', out: 'AUS', missed: 'VERHUNGERT' }[outcome];
+}
+
 export function evaluateShotFrame(
   previousBall: Point,
   ball: Point,
