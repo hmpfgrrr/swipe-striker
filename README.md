@@ -1,4 +1,4 @@
-# Swipe Striker v0.2.1
+# Swipe Striker v0.3.0
 
 Ein kleines Fußballspiel für iPhone und Browser: Ziehe vom Ball aus eine Kurve, lasse los und versuche, Torwart und Verteidiger zu überwinden.
 
