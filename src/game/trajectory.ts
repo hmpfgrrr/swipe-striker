@@ -9,7 +9,12 @@ const reflect = (value: number, minimum: number, maximum: number): number => {
   return minimum + (normalized <= range ? normalized : period - normalized);
 };
 
-export function createShotPath(gesture: Point[], start: Point, bounds: PitchBounds): ShotPathResult {
+export function createShotPath(
+  gesture: Point[],
+  start: Point,
+  bounds: PitchBounds,
+  spinOffset = 0,
+): ShotPathResult {
   const minX = bounds.left + bounds.ballRadius;
   const maxX = bounds.right - bounds.ballRadius;
   const minY = bounds.top - bounds.ballRadius;
@@ -39,12 +44,13 @@ export function createShotPath(gesture: Point[], start: Point, bounds: PitchBoun
   const averageDeviation = deviations.length
     ? deviations.reduce((sum, value) => sum + value, 0) / deviations.length
     : 0;
+  const curveDeviation = clamp(averageDeviation + spinOffset, -115, 115);
   const extendedEndY = Math.max(minY, end.y - 120);
   const extendedRawEndX = bounds.sideBounce ? rawEndX + (rawEndX - start.x) * 0.35 : end.x;
   const control = {
     x: bounds.sideBounce
-      ? (accepted[0].x + extendedRawEndX) / 2 + clamp(averageDeviation, -90, 90)
-      : clamp((accepted[0].x + end.x) / 2 + clamp(averageDeviation, -90, 90), minX, maxX),
+      ? (accepted[0].x + extendedRawEndX) / 2 + curveDeviation
+      : clamp((accepted[0].x + end.x) / 2 + curveDeviation, minX, maxX),
     y: (accepted[0].y + extendedEndY) / 2,
   };
   const points = Array.from({ length: 32 }, (_, index) => {

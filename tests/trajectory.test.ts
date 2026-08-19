@@ -123,6 +123,26 @@ describe('trajectory', () => {
     });
   });
 
+  it('applies a bounded two-finger spin offset to the curve', () => {
+    const gesture = [
+      { x: 195, y: 700 },
+      { x: 195, y: 520 },
+      { x: 195, y: 300 },
+    ];
+    const straight = createShotPath(gesture, { x: 195, y: 700 }, bounds);
+    const spun = createShotPath(gesture, { x: 195, y: 700 }, bounds, 110);
+    const previousLimit = createShotPath(gesture, { x: 195, y: 700 }, bounds, 90);
+
+    expect(straight.valid).toBe(true);
+    expect(spun.valid).toBe(true);
+    expect(previousLimit.valid).toBe(true);
+    if (!straight.valid || !spun.valid || !previousLimit.valid) return;
+
+    expect(spun.points[12].x).toBeGreaterThan(previousLimit.points[12].x);
+    expect(previousLimit.points[12].x).toBeGreaterThan(straight.points[12].x);
+    expect(spun.points.every((point) => point.x >= 30 && point.x <= 360)).toBe(true);
+  });
+
   it('reflects an indoor shot from the side bande', () => {
     const indoorBounds = { ...bounds, sideBounce: true };
     const result = createShotPath(

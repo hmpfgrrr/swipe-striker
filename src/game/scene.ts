@@ -47,6 +47,10 @@ export class GameScene extends Phaser.Scene {
   private replayTimer?: Phaser.Time.TimerEvent;
   private dragPath: Point[] = [];
   private dragging = false;
+  private dragPointerId?: number;
+  private spinPointerId?: number;
+  private spinStartX = 0;
+  private spinOffset = 0;
   private shotActive = false;
   private fieldMode: FieldMode = 'grass';
   private fieldSelection: Phaser.GameObjects.GameObject[] = [];
@@ -522,23 +526,48 @@ export class GameScene extends Phaser.Scene {
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (this.shotActive || this.restart.visible) return;
       this.audio.startAtmosphere();
+      if (this.dragging) {
+        if (this.spinPointerId === undefined && pointer.id !== this.dragPointerId) {
+          this.spinPointerId = pointer.id;
+          this.spinStartX = pointer.x;
+          this.spinOffset = 0;
+        }
+        return;
+      }
       const point = { x: pointer.x, y: pointer.y };
       if (Phaser.Math.Distance.Between(point.x, point.y, this.layout.ball.x, this.layout.ball.y) <= 48) {
         this.dragging = true;
+        this.dragPointerId = pointer.id;
+        this.spinPointerId = undefined;
+        this.spinOffset = 0;
         this.dragPath = [point];
       }
     });
     this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
       if (!this.dragging) return;
+      if (pointer.id === this.spinPointerId) {
+        this.spinOffset = Phaser.Math.Clamp(pointer.x - this.spinStartX, -150, 150);
+        const result = createShotPath(this.dragPath, this.layout.ball, bounds, this.spinOffset);
+        this.drawPath(result.valid ? result.points : []);
+        return;
+      }
+      if (pointer.id !== this.dragPointerId) return;
       this.dragPath.push({ x: pointer.x, y: pointer.y });
-      const result = createShotPath(this.dragPath, this.layout.ball, bounds);
+      const result = createShotPath(this.dragPath, this.layout.ball, bounds, this.spinOffset);
       this.drawPath(result.valid ? result.points : []);
     });
     this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+      if (pointer.id === this.spinPointerId) {
+        this.spinPointerId = undefined;
+        return;
+      }
       if (!this.dragging) return;
+      if (pointer.id !== this.dragPointerId) return;
       this.dragging = false;
+      this.dragPointerId = undefined;
+      this.spinPointerId = undefined;
       this.dragPath.push({ x: pointer.x, y: pointer.y });
-      const result = createShotPath(this.dragPath, this.layout.ball, bounds);
+      const result = createShotPath(this.dragPath, this.layout.ball, bounds, this.spinOffset);
       this.drawPath([]);
       if (!result.valid) {
         this.audio.playNegative();
@@ -720,6 +749,9 @@ export class GameScene extends Phaser.Scene {
     this.resetActor(this.goalkeeper);
     this.dragPath = [];
     this.dragging = false;
+    this.dragPointerId = undefined;
+    this.spinPointerId = undefined;
+    this.spinOffset = 0;
     this.shotActive = false;
     this.restart.setVisible(false);
     this.feedback.setText('').setAlpha(0);
