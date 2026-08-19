@@ -32,6 +32,8 @@ Auf dem Spielfeld kann zwischen zwei lokalen Web-Audio-Profilen gewählt werden:
 
 Die lokalen MP3-Dateien basieren auf [Soccer Stadium 10](https://pixabay.com/sound-effects/city-soccer-stadium-10-6709/) und [Crowd Cheering](https://pixabay.com/sound-effects/people-crowd-cheering-379666/), jeweils als kostenlos nutzbar unter der Pixabay Content License. Für die PWA wurden die Ausschnitte auf 12 beziehungsweise 2,3 Sekunden gekürzt und als Mono-MP3 mit 64 kbps gespeichert; beim Jubel wurde der stille Vorlauf entfernt.
 
+Die PWA prüft beim Start und bei der Rückkehr in die App auf eine neue Version. Wenn ein Update bereitsteht, erscheint ein Hinweis mit `JETZT AKTUALISIEREN`; danach wird der neue Service Worker aktiviert und die App einmal neu geladen.
+
 ## Steuerung
 
 Der Finger muss nahe am Ball starten und mindestens 80 Pixel in Richtung Tor wischen. Eine seitliche Bewegung gibt dem Ball Drall; daraus entsteht eine einzige glatte Kurve ohne scharfe Haken oder Rückwärtsbewegung. Verteidiger bewegen sich in ihren Zonen, reagieren auf den Schuss und der Torwart hechtet zur erwarteten Torposition. Nach `TOR!`, `GEHALTEN`, `GEBLOCKT`, `AUS` oder `DANEBEN` kann die Szene über „NOCHMAL SPIELEN“ zurückgesetzt werden.

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import './ui/styles.css';
 import { GAME_HEIGHT, GAME_WIDTH } from './game/config';
 import { GameScene } from './game/scene';
+import { registerAppUpdates } from './update';
 new Phaser.Game({
   type: Phaser.AUTO,
   width: GAME_WIDTH,
@@ -12,5 +13,4 @@ new Phaser.Game({
   scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
   scene: [GameScene],
 });
-if ('serviceWorker' in navigator && import.meta.env.PROD)
-  navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`);
+registerAppUpdates();
