@@ -7,6 +7,7 @@ Ein kleines Fußballspiel für iPhone und Browser: Ziehe vom Ball aus eine Kurve
 **[Swipe Striker jetzt im Browser öffnen](https://hmpfgrrr.github.io/swipe-striker/)**
 
 Die Seite ist als PWA (Progressive Web App) veröffentlicht und kann wie eine App auf dem Smartphone installiert werden.
+Aktuell nur für iPhone optimiert, ggf. das Browserfenster auf PC/Mac kleinerziehen.
 
 ## PWA installieren
 
