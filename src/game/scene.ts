@@ -326,7 +326,7 @@ export class GameScene extends Phaser.Scene {
         color: '#fff4dc',
         fontStyle: 'bold',
       })
-      .setOrigin(0, 1)
+      .setOrigin(0, 0.5)
       .setDepth(20);
     this.updateHighscoreText();
   }
@@ -351,7 +351,7 @@ export class GameScene extends Phaser.Scene {
 
   private createFieldButton(): void {
     this.fieldButton = this.add
-      .text(GAME_WIDTH - 24, GAME_HEIGHT - 105, 'FELD', {
+      .text(GAME_WIDTH - 24, GAME_HEIGHT - 105, 'OPTIONEN', {
         fontFamily: 'system-ui',
         fontSize: '13px',
         color: '#0b1720',
@@ -359,7 +359,7 @@ export class GameScene extends Phaser.Scene {
         padding: { x: 12, y: 9 },
         fontStyle: 'bold',
       })
-      .setOrigin(1)
+      .setOrigin(1, 0.5)
       .setInteractive({ useHandCursor: true })
       .setDepth(20)
       .setVisible(true);

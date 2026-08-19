@@ -4,6 +4,20 @@ export function shouldPauseAudio(visibilityState: DocumentVisibilityState, event
   return visibilityState === 'hidden' || eventType === 'pagehide';
 }
 
+export async function primeAudioElement(
+  audio: Pick<HTMLAudioElement, 'play' | 'pause' | 'currentTime' | 'volume'>,
+  volume: number,
+): Promise<void> {
+  audio.volume = 0;
+  try {
+    await audio.play();
+    audio.pause();
+    audio.currentTime = 0;
+  } finally {
+    audio.volume = volume;
+  }
+}
+
 export const AUDIO_ASSETS = {
   stadiumAtmosphere: '/audio/stadium-crowd.mp3',
   goalCheer: '/audio/goal-cheer.mp3',
@@ -50,6 +64,7 @@ export class GameAudio {
   private atmosphere?: { source: AudioBufferSourceNode; gain: GainNode };
   private stadiumAtmosphere?: HTMLAudioElement;
   private stadiumGoal?: HTMLAudioElement;
+  private stadiumGoalPrimed = false;
   private profile: AudioProfile;
 
   constructor(profile: AudioProfile = 'stadium') {
@@ -160,6 +175,14 @@ export class GameAudio {
     this.stadiumAtmosphere.loop = true;
     this.stadiumAtmosphere.volume = 0.12;
     void this.stadiumAtmosphere.play().catch(() => undefined);
+    this.stadiumGoal ??= new Audio(`${import.meta.env.BASE_URL}audio/goal-cheer.mp3`);
+    this.stadiumGoal.preload = 'auto';
+    if (!this.stadiumGoalPrimed) {
+      this.stadiumGoalPrimed = true;
+      void primeAudioElement(this.stadiumGoal, 0.5).catch(() => {
+        this.stadiumGoalPrimed = false;
+      });
+    }
   }
 
   private stopStadiumAtmosphere(): void {
