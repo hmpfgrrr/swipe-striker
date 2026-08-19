@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AUDIO_ASSETS, AUDIO_PROFILES, type AudioProfile } from '../src/game/audio';
+import { AUDIO_ASSETS, AUDIO_PROFILES, shouldPauseAudio, type AudioProfile } from '../src/game/audio';
 
 describe('audio profiles', () => {
   it('references the local stadium assets', () => {
@@ -19,5 +19,11 @@ describe('audio profiles', () => {
     expect(AUDIO_PROFILES.arcade.goal.duration).toBe(0.34);
     expect(AUDIO_PROFILES.arcade.negative.duration).toBe(0.24);
     expect(AUDIO_PROFILES.arcade.missed.duration).toBe(0.18);
+  });
+
+  it('pauses audio when the app becomes hidden or leaves the page', () => {
+    expect(shouldPauseAudio('hidden', 'visibilitychange')).toBe(true);
+    expect(shouldPauseAudio('visible', 'pagehide')).toBe(true);
+    expect(shouldPauseAudio('visible', 'visibilitychange')).toBe(false);
   });
 });

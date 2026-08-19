@@ -13,7 +13,7 @@ import type { Reaction } from './movement';
 import { evaluateShotFrame, getShotOutcomeLabel } from './rules';
 import { createShotPath } from './trajectory';
 import type { Defender, PitchBounds, Point, ShotOutcome } from './types';
-import { GameAudio } from './audio';
+import { GameAudio, shouldPauseAudio } from './audio';
 import type { AudioProfile } from './audio';
 export { createInitialDefenders, getFieldLayout } from './layout';
 
@@ -56,6 +56,9 @@ export class GameScene extends Phaser.Scene {
   private highscore = 0;
   private audioProfile: AudioProfile = 'stadium';
   private audio = new GameAudio(this.audioProfile);
+  private handlePageExit = (event: Event): void => {
+    if (shouldPauseAudio(document.visibilityState, event.type)) this.audio.pause();
+  };
 
   constructor() {
     super('GameScene');
@@ -66,7 +69,13 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(data?: { fieldMode?: FieldMode; chooseField?: boolean }): void {
-    this.events.once('shutdown', () => this.audio.stopAtmosphere());
+    document.addEventListener('visibilitychange', this.handlePageExit);
+    window.addEventListener('pagehide', this.handlePageExit);
+    this.events.once('shutdown', () => {
+      this.audio.stopAtmosphere();
+      document.removeEventListener('visibilitychange', this.handlePageExit);
+      window.removeEventListener('pagehide', this.handlePageExit);
+    });
     if (!data?.fieldMode) {
       this.showFieldSelection();
       return;

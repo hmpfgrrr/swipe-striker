@@ -1,5 +1,9 @@
 export type AudioProfile = 'stadium' | 'arcade';
 
+export function shouldPauseAudio(visibilityState: DocumentVisibilityState, eventType: string): boolean {
+  return visibilityState === 'hidden' || eventType === 'pagehide';
+}
+
 export const AUDIO_ASSETS = {
   stadiumAtmosphere: '/audio/stadium-crowd.mp3',
   goalCheer: '/audio/goal-cheer.mp3',
@@ -85,6 +89,12 @@ export class GameAudio {
     this.stopStadiumAtmosphere();
     this.atmosphere?.source.stop();
     this.atmosphere = undefined;
+  }
+
+  pause(): void {
+    this.stopAtmosphere();
+    this.stadiumGoal?.pause();
+    if (this.context?.state === 'running') void this.context.suspend();
   }
 
   playGoal(): void {
