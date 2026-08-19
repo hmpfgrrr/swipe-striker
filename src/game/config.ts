@@ -2,7 +2,7 @@ import packageJson from '../../package.json';
 
 export const GAME_WIDTH = 390;
 export const GAME_HEIGHT = 844;
-export const APP_VERSION = packageJson.version.split('.').slice(0, 2).join('.');
+export const APP_VERSION = packageJson.version;
 export const PORTRAIT_ASPECT_RATIO = GAME_WIDTH / GAME_HEIGHT;
 export const COLORS = {
   ink: 0x0b1720,

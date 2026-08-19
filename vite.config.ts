@@ -7,7 +7,12 @@ export default defineConfig({
   base,
   plugins: [
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: null,
+      workbox: {
+        skipWaiting: false,
+        clientsClaim: false,
+      },
       manifest: {
         name: 'Swipe Striker',
         short_name: 'Swipe Striker',

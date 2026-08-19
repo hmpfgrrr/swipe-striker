@@ -158,6 +158,16 @@ export class GameScene extends Phaser.Scene {
   private createSelectionLogo(): Phaser.GameObjects.Container {
     const logo = this.add.container(GAME_WIDTH / 2, 145);
     logo.add(this.add.image(0, 0, 'selection-logo').setDisplaySize(190, 190));
+    logo.add(
+      this.add
+        .text(0, 112, `VERSION ${APP_VERSION}`, {
+          fontFamily: 'system-ui',
+          fontSize: '12px',
+          color: '#d2f0dc',
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5),
+    );
     return logo;
   }
 
@@ -201,7 +211,7 @@ export class GameScene extends Phaser.Scene {
       .strokeRect(20, 28, GAME_WIDTH - 40, GAME_HEIGHT - 56)
       .strokeCircle(GAME_WIDTH / 2, GAME_HEIGHT * 0.5, 62)
       .lineBetween(20, GAME_HEIGHT * 0.5, GAME_WIDTH - 20, GAME_HEIGHT * 0.5);
-    this.add.text(24, 32, `SWIPE STRIKER ${APP_VERSION}`, {
+    this.add.text(24, 32, 'SWIPE STRIKER', {
       fontFamily: 'system-ui',
       fontSize: '18px',
       color: '#fff4dc',
@@ -267,7 +277,7 @@ export class GameScene extends Phaser.Scene {
       .strokeRect(fieldLeft, fieldTop, fieldWidth, fieldHeight)
       .strokeCircle(GAME_WIDTH / 2, GAME_HEIGHT * 0.5, 62)
       .lineBetween(fieldLeft, GAME_HEIGHT * 0.5, fieldLeft + fieldWidth, GAME_HEIGHT * 0.5);
-    this.add.text(24, 32, `SWIPE STRIKER ${APP_VERSION} · INDOOR`, {
+    this.add.text(24, 32, 'SWIPE STRIKER', {
       fontFamily: 'system-ui',
       fontSize: '18px',
       color: '#fff4dc',
