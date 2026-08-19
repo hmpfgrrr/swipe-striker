@@ -2,6 +2,26 @@
 
 Ein kleines Fußballspiel für iPhone und Browser: Ziehe vom Ball aus eine Kurve, lasse los und versuche, Torwart und Verteidiger zu überwinden.
 
+## Direkt spielen
+
+**[Swipe Striker jetzt im Browser öffnen](https://hmpfgrrr.github.io/swipe-striker/)**
+
+Die Seite ist als PWA (Progressive Web App) veröffentlicht und kann wie eine App auf dem Smartphone installiert werden.
+
+## PWA installieren
+
+### iPhone / iPad
+
+1. Den [Spiel-Link](https://hmpfgrrr.github.io/swipe-striker/) in Safari öffnen.
+2. Auf „Teilen“ → „Zum Home-Bildschirm“ tippen.
+3. „Hinzufügen“ auswählen und das Spiel über das neue Symbol starten.
+
+### Android
+
+1. Den [Spiel-Link](https://hmpfgrrr.github.io/swipe-striker/) in Chrome öffnen.
+2. Im Browser-Menü „App installieren“ oder „Zum Startbildschirm hinzufügen“ auswählen.
+3. Die Installation bestätigen und das Spiel über das neue Symbol starten.
+
 ## Lokal starten
 
 ```bash
@@ -17,7 +37,7 @@ npm run build
 npm run preview
 ```
 
-## Auf dem iPhone installieren
+## Lokal auf dem iPhone installieren
 
 1. Computer und iPhone ins gleiche WLAN bringen.
 2. Den Vite-Entwicklungsserver mit `npm run dev -- --host` starten und die angezeigte Netzwerkadresse in Safari öffnen.
