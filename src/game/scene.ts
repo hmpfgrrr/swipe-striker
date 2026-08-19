@@ -13,6 +13,8 @@ import type { Reaction } from './movement';
 import { evaluateShotFrame, getShotOutcomeLabel } from './rules';
 import { createShotPath } from './trajectory';
 import type { Defender, PitchBounds, Point, ShotOutcome } from './types';
+import { GameAudio } from './audio';
+import type { AudioProfile } from './audio';
 export { createInitialDefenders, getFieldLayout } from './layout';
 
 type ActorVisual = {
@@ -27,6 +29,7 @@ type ReplayActorPositions = { goalkeeper: Point; defenders: Point[] };
 const FIELD_BOUNDS: PitchBounds = { left: 20, right: 370, top: 28, bottom: 816, ballRadius: 10 };
 const INDOOR_BOUNDS: PitchBounds = { ...FIELD_BOUNDS, sideBounce: true };
 const HIGHSCORE_STORAGE_KEY = 'swipe-striker-highscore';
+const AUDIO_PROFILE_STORAGE_KEY = 'swipe-striker-audio-profile';
 
 export class GameScene extends Phaser.Scene {
   private layout!: FieldLayout;
@@ -51,6 +54,8 @@ export class GameScene extends Phaser.Scene {
   private lastShotActorPositions?: ReplayActorPositions;
   private replaying = false;
   private highscore = 0;
+  private audioProfile: AudioProfile = 'stadium';
+  private audio = new GameAudio(this.audioProfile);
 
   constructor() {
     super('GameScene');
@@ -61,6 +66,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(data?: { fieldMode?: FieldMode; chooseField?: boolean }): void {
+    this.events.once('shutdown', () => this.audio.stopAtmosphere());
     if (!data?.fieldMode) {
       this.showFieldSelection();
       return;
@@ -89,6 +95,39 @@ export class GameScene extends Phaser.Scene {
       { mode: 'grass', label: 'RASEN', y: 390 },
       { mode: 'indoor', label: 'INDOOR MIT BANDE', y: 500 },
     ];
+    const savedProfile = typeof localStorage === 'undefined' ? null : localStorage.getItem(AUDIO_PROFILE_STORAGE_KEY);
+    if (savedProfile === 'stadium' || savedProfile === 'arcade') this.audioProfile = savedProfile;
+    this.audio.setProfile(this.audioProfile);
+    this.add
+      .text(GAME_WIDTH / 2, 590, 'AUDIO-PROFIL', {
+        fontFamily: 'system-ui',
+        fontSize: '13px',
+        color: '#d2f0dc',
+      })
+      .setOrigin(0.5);
+    const profileButtons = (['stadium', 'arcade'] as const).map((profile, index) => {
+      const labels = { stadium: 'STADION', arcade: 'ARCADE' };
+      const button = this.add
+        .text(GAME_WIDTH / 2 - 88 + index * 176, 635, labels[profile], {
+          fontFamily: 'system-ui',
+          fontSize: '13px',
+          color: '#0b1720',
+          backgroundColor: profile === this.audioProfile ? '#fff4dc' : '#b4cbbd',
+          padding: { x: 14, y: 9 },
+          fontStyle: 'bold',
+        })
+        .setOrigin(0.5)
+        .setInteractive({ useHandCursor: true });
+      button.on('pointerdown', () => {
+        this.audioProfile = profile;
+        this.audio.setProfile(profile);
+        if (typeof localStorage !== 'undefined') localStorage.setItem(AUDIO_PROFILE_STORAGE_KEY, profile);
+        profileButtons.forEach((candidate, candidateIndex) =>
+          candidate.setStyle({ backgroundColor: candidateIndex === index ? '#fff4dc' : '#b4cbbd' }),
+        );
+      });
+      return button;
+    });
     const buttons = options.map(({ mode, label, y }) => {
       const option = this.add
         .text(GAME_WIDTH / 2, y, label, {
@@ -104,7 +143,7 @@ export class GameScene extends Phaser.Scene {
       option.on('pointerdown', () => this.startGame(mode));
       return option;
     });
-    this.fieldSelection = [logo, title, subtitle, ...buttons];
+    this.fieldSelection = [logo, title, subtitle, ...buttons, ...profileButtons];
   }
 
   private createSelectionLogo(): Phaser.GameObjects.Container {
@@ -115,6 +154,7 @@ export class GameScene extends Phaser.Scene {
 
   private startGame(mode: FieldMode): void {
     this.fieldMode = mode;
+    this.audio.setProfile(this.audioProfile);
     this.loadHighscore();
     if (typeof localStorage !== 'undefined') localStorage.setItem('swipe-striker-field', mode);
     this.fieldSelection.forEach((option) => option.destroy());
@@ -462,6 +502,7 @@ export class GameScene extends Phaser.Scene {
     const bounds = this.fieldMode === 'indoor' ? INDOOR_BOUNDS : FIELD_BOUNDS;
     this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
       if (this.shotActive || this.restart.visible) return;
+      this.audio.startAtmosphere();
       const point = { x: pointer.x, y: pointer.y };
       if (Phaser.Math.Distance.Between(point.x, point.y, this.layout.ball.x, this.layout.ball.y) <= 48) {
         this.dragging = true;
@@ -481,6 +522,7 @@ export class GameScene extends Phaser.Scene {
       const result = createShotPath(this.dragPath, this.layout.ball, bounds);
       this.drawPath([]);
       if (!result.valid) {
+        this.audio.playNegative();
         this.showOutcome('DANEBEN');
         return;
       }
@@ -586,6 +628,11 @@ export class GameScene extends Phaser.Scene {
     if (!this.shotActive) return;
     this.shotActive = false;
     this.shotTween?.stop();
+    if (!this.replaying) {
+      if (outcome === 'goal') this.audio.playGoal();
+      else if (outcome === 'missed') this.audio.playMissed();
+      else this.audio.playNegative();
+    }
     if (outcome === 'goal' && !this.replaying) this.registerGoal();
     this.showOutcome(getShotOutcomeLabel(outcome));
     if (outcome === 'goal' && !this.replaying && this.lastShotPath.length) {
